@@ -16,7 +16,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 type Screen = 'home' | 'report' | 'product' | 'recipe';
 
-const API_BASE = "http://localhost:8081/api/v1";
+const API_BASE = "http://localhost:8080/api/v1";
 
 const App: React.FC = () => {
   const [currentScreen, setCurrentScreen] = useState<Screen>('home');

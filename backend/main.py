@@ -106,6 +106,26 @@ async def analyze_barcode(barcode: str, user_id: str = "demo_user"):
         "sources": ["Open Food Facts", "Ayurvedic Ingredient Database"]
     }
 
+@app.post("/api/v1/suggest-recipes", response_model=List[Recipe])
+async def suggest_recipes(ingredients: List[str]):
+    # In production, this would use Gemini 2.0 Flash to generate recipes
+    return [
+        {
+            "name": "Healing Mung Dal Kitchari",
+            "health_score": 98,
+            "prep_time": "30 mins",
+            "ingredients": ["mung dal", "basmati rice", "turmeric", "ginger"],
+            "ayurvedic_benefit": "Tridoshic balancing, easy on digestion (Agni)."
+        },
+        {
+            "name": "Cooling Pitta Salad",
+            "health_score": 85,
+            "prep_time": "15 mins",
+            "ingredients": ["cucumber", "cilantro", "lime", "pomegranate"],
+            "ayurvedic_benefit": "Reduces internal heat and balances Pitta dosha."
+        }
+    ]
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8080)
