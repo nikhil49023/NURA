@@ -1,6 +1,7 @@
-# VitaSync Implementation Plan
+# NURA Implementation Plan
+## Nutrition → Understanding → Recommendation → Action
 
-VitaSync is a premium health-tech application that bridges medical data with daily nutrition using Ayurveda and AI. This project directly addresses the challenge of helping individuals make better food choices by leveraging personal health data, behavioral inputs (pantry inventory), and contextual intelligence (Ayurveda).
+NURA is a premium, cloud-native health intelligence platform that bridges medical data with daily nutrition using Ayurveda and AI. This project directly addresses the challenge of helping individuals make better food choices by leveraging personal health data, behavioral inputs (pantry inventory), and contextual intelligence (Ayurveda).
 
 ## 🎯 Challenge Alignment
 - **Leveraging Available Data**: Scans and parses medical lab reports (HbA1c, Cholesterol) to create a baseline.
@@ -18,7 +19,7 @@ VitaSync is a premium health-tech application that bridges medical data with dai
 - **Orchestration**: Cloud Build for CI/CD.
 
 ## 🚀 Phase 1: Backend Foundation (FastAPI) [IN PROGRESS]
-- [x] Initialize `vitasync-backend` with Docker support.
+- [x] Initialize `nura-backend` with Docker support.
 - [x] Implement API Routes:
     - `POST /api/v1/scan-report`: Image/PDF -> Structured Health Markers.
     - `POST /api/v1/analyze-barcode`: Barcode -> Ingredient Verdict.
@@ -28,7 +29,7 @@ VitaSync is a premium health-tech application that bridges medical data with dai
 - [ ] Integrate **Firestore** for storing user health profiles and scan history.
 
 ## 🎨 Phase 2: Frontend & Design System (React) [IN PROGRESS]
-- [x] Initialize `vitasync-frontend` using Vite + React.
+- [x] Initialize `nura-frontend` using Vite + React.
 - [x] Design System (`index.css`):
     - **Colors**: Saffron (#FF9933), Leaf Green (#4CAF50), Earthy Brown (#5D4037), Cream (#FFFDD0).
     - **Typography**: Inter / Outfit for a modern feel.
@@ -51,6 +52,7 @@ VitaSync is a premium health-tech application that bridges medical data with dai
 
 ## 🚢 Phase 4: Cloud Native Orchestration [IN PROGRESS]
 - [x] Implement `cloudbuild.yaml` for automated deployment.
+- [x] Integrate medical disclaimers and safety guardrails across UI and AI prompts.
 - [ ] Configure **Secret Manager** for `GOOGLE_API_KEY` and database credentials.
 - [ ] Setup Service Accounts with least-privilege for Firestore and Vision API.
 - [ ] Deploy to **Google Cloud Run** using the `NURA` project container registry.
@@ -61,6 +63,7 @@ VitaSync is a premium health-tech application that bridges medical data with dai
 ## 🛠️ API Schema Preview (FastAPI)
 
 ```python
+# NURA Intelligence Schema
 class HealthReport(BaseModel):
     markers: List[dict] # {name: "HbA1c", value: 6.2, unit: "%"}
     ayurvedic_insight: str
