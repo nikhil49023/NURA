@@ -24,7 +24,13 @@ steps:
 
   # Build Frontend
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/nura-frontend', './frontend']
+    args:
+      - 'build'
+      - '--build-arg'
+      - 'VITE_API_BASE_URL=${_FRONTEND_API_BASE_URL}'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/nura-frontend'
+      - './frontend'
   
   # Push Frontend
   - name: 'gcr.io/cloud-builders/docker'
@@ -48,3 +54,6 @@ steps:
 images:
   - 'gcr.io/$PROJECT_ID/nura-backend'
   - 'gcr.io/$PROJECT_ID/nura-frontend'
+
+substitutions:
+  _FRONTEND_API_BASE_URL: 'https://REPLACE_WITH_BACKEND_RUN_URL/api/v1'
