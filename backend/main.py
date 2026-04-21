@@ -13,7 +13,7 @@ load_dotenv()
 genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 model = genai.GenerativeModel('gemini-1.5-flash')
 
-app = FastAPI(title="VitaSync API", version="1.0.0")
+app = FastAPI(title="NURA API", version="1.0.0")
 
 # Enable CORS for frontend development
 app.add_middleware(
@@ -51,7 +51,7 @@ class Recipe(BaseModel):
 
 @app.get("/")
 async def root():
-    return {"status": "online", "message": "VitaSync Intelligence Layer Active"}
+    return {"status": "online", "message": "NURA Intelligence Layer Active"}
 
 @app.post("/api/v1/scan-report", response_model=HealthReportResponse)
 async def scan_report(file: UploadFile = File(...)):

@@ -128,7 +128,7 @@ const HomeScreen = ({ onNavigate }: { onNavigate: (s: Screen) => void }) => (
     exit={{ opacity: 0, y: -20 }}
   >
     <header style={{ marginBottom: 32, marginTop: 20 }}>
-      <h1>VitaSync</h1>
+      <h1>NURA</h1>
       <p style={{ color: 'var(--text-muted)' }}>Precision Health, Rooted in Ayurveda.</p>
     </header>
 
