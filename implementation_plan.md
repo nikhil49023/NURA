@@ -12,7 +12,9 @@ VitaSync is a premium health-tech application that bridges medical data with dai
 - **Backend**: FastAPI (Python) - Containerized on **Google Cloud Run**.
 - **Frontend**: React (Vite) - Containerized on **Google Cloud Run**.
 - **Intelligence**: Gemini 1.5 Flash (Reasoning), Google Cloud Vision (OCR).
+- **Context Engine**: RAG (Retrieval-Augmented Generation) using a Vector Database for Ayurvedic knowledge.
 - **Data**: Firestore (NoSQL) for user states, Cloud Storage for artifacts.
+- **External Signals**: OpenWeather/IQAir API for AQI and seasonality.
 - **Orchestration**: Cloud Build for CI/CD.
 
 ## 🚀 Phase 1: Backend Foundation (FastAPI) [IN PROGRESS]
@@ -37,10 +39,15 @@ VitaSync is a premium health-tech application that bridges medical data with dai
     - `RecipeCard`: Health score and prep time.
 - [ ] Implement user authentication and profile persistence.
 
-## 🧪 Phase 3: Feature Integration
+## 🧪 Phase 3: Feature Integration & Contextual Intelligence
 - [ ] **Module 1: Health Scanner**: Integration with Cloud Vision OCR and extraction logic.
 - [ ] **Module 2: Product Scanner**: Integration with Open Food Facts API.
-- [ ] **Module 3: AI Meal Engine**: Connecting backend reasoning to frontend displays.
+- [ ] **Module 3: Contextual RAG Layer**:
+    - [ ] Ingest Ayurvedic texts and clinical nutrition guidelines into a Vector Store.
+    - [ ] Implement semantic retrieval based on user health markers + location.
+- [ ] **Module 4: Environmental Awareness**:
+    - [ ] Fetch local AQI/Weather data based on user location.
+    - [ ] Adjust Gemini prompts to prioritize anti-pollution/seasonal healing foods.
 
 ## 🚢 Phase 4: Cloud Native Orchestration [IN PROGRESS]
 - [x] Implement `cloudbuild.yaml` for automated deployment.
