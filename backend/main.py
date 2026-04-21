@@ -61,6 +61,7 @@ async def scan_report(file: UploadFile = File(...)):
     Extract medical markers from this lab report text. 
     Return JSON format: {markers: [{name, value, unit, status}], ayurvedic_insight: string, recommendations: [string]}
     Identify if HbA1c, Cholesterol, or Vitamin levels are abnormal.
+    IMPORTANT: Every insight MUST be followed by this disclaimer: "NURA is an AI-powered guidance tool. This analysis is for educational purposes and is NOT a substitute for professional medical advice, diagnosis, or treatment. Always consult with a qualified healthcare provider."
     """
     # Simulating Gemini response for a mock report
     return {
@@ -96,6 +97,7 @@ async def analyze_barcode(barcode: str):
     2. Reason: Short health explanation.
     3. Ayurvedic Perspective: Link to Dosha or Ama.
     Output JSON: {{"verdict": "...", "reason": "...", "ayurvedic_perspective": "..."}}
+    IMPORTANT: Add this medical disclaimer to the reason: "Disclaimer: Not medical advice. Consult a physician for specific dietary requirements."
     """
     
     try:

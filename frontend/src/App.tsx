@@ -141,6 +141,12 @@ const HomeScreen = ({ onNavigate }: { onNavigate: (s: Screen) => void }) => (
       <p style={{ marginTop: 16, fontSize: 14 }}>Your Pitta levels are slightly high. Try cooling foods today.</p>
     </div>
 
+    <div style={{ marginTop: 24, padding: '12px 16px', background: 'rgba(255,255,255,0.5)', borderRadius: 12, border: '1px solid var(--glass-border)' }}>
+      <p style={{ fontSize: 11, color: 'var(--text-muted)', textAlign: 'center', margin: 0 }}>
+        ⚠️ <strong>Medical Disclaimer:</strong> NURA provides AI-driven nutritional guidance based on Ayurveda and clinical data. It is not a medical device. Always consult a physician for health concerns.
+      </p>
+    </div>
+
     <section>
       <h2>Quick Actions</h2>
       <div className="glass-card" onClick={() => onNavigate('report')} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 16 }}>
@@ -235,6 +241,9 @@ const ReportScreen = ({ onBack, onScan, data }: { onBack: () => void, onScan: ()
               ))}
             </ul>
           </div>
+          <p style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 16, textAlign: 'center' }}>
+            Consult your doctor before making major changes to your diet or health regimen.
+          </p>
         </section>
       </>
     )}
