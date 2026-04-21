@@ -1,20 +1,22 @@
 import os
-import requests
-import google.generativeai as genai
-from fastapi import FastAPI, UploadFile, File, HTTPException, BackgroundTasks
-from pydantic import BaseModel, Field
-from typing import List, Optional
+from fastapi import FastAPI, UploadFile, File, HTTPException, Depends
+from typing import List
 from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
 
+from models import HealthReportResponse, ProductAnalysis, Recipe
+from services import GeminiService
+from external_apis import OpenFoodFactsService
+
 load_dotenv()
 
-# Configure Gemini 2.0 Flash
-genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
-model = genai.GenerativeModel('gemini-2.0-flash')
+app = FastAPI(
+    title="NURA API", 
+    version="2.0.0",
+    description="Precision Health Intelligence Layer bridging Clinical Data with Ayurveda"
+)
 
-app = FastAPI(title="NURA API", version="2.0.0")
-
+# CORS Configuration
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -23,109 +25,87 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-class UserProfile(BaseModel):
-    user_id: str
-    dosha: str
-    age: int
-    conditions: List[str]
-    location: str
-
-class HealthMarker(BaseModel):
-    name: str
-    value: float
-    unit: str
-    status: str
-
-class HealthReportResponse(BaseModel):
-    markers: List[HealthMarker]
-    ayurvedic_insight: str
-    recommendations: List[str]
-    confidence: float = 0.95
-    sources: List[str] = ["Clinical Lab Report", "Ayurvedic Nutrition Framework"]
-    disclaimer: str = "NURA provides nutritional guidance, not medical advice. Consult your doctor before making changes based on lab values."
-
-class ProductAnalysis(BaseModel):
-    product_name: str
-    barcode: str
-    verdict: str # Eat | Caution | Avoid
-    reason: str
-    ayurvedic_perspective: str
-    confidence: float
-    sources: List[str]
-    disclaimer: str = "This is a dietary suggestion based on your profile. Consult a healthcare provider for medical requirements."
-
-class Recipe(BaseModel):
-    name: str
-    health_score: int
-    prep_time: str
-    ingredients: List[str]
-    ayurvedic_benefit: str
-    disclaimer: str = "Consult a physician for specific dietary needs."
+# Dependency Injection
+def get_gemini_service():
+    return GeminiService()
 
 @app.get("/")
 async def root():
-    return {"status": "online", "message": "NURA v2.0 Intelligence Layer Active (Gemini 2.0 Flash)"}
+    return {
+        "status": "online", 
+        "message": "NURA v2.0 Intelligence Layer Active",
+        "engine": "Gemini 2.0 Flash"
+    }
 
 @app.post("/api/v1/scan-report", response_model=HealthReportResponse)
-async def scan_report(file: UploadFile = File(...), background_tasks: BackgroundTasks = None):
-    # In production, this would trigger a Cloud Task for async processing
-    # For now, we simulate the structured output of Gemini 2.0 Flash
-    return {
-        "markers": [
-            {"name": "HbA1c", "value": 6.4, "unit": "%", "status": "Pre-diabetic"},
-            {"name": "Vitamin D", "value": 22, "unit": "ng/mL", "status": "Low"}
-        ],
-        "ayurvedic_insight": "High sugar markers indicate a Kapha-Pitta imbalance. Focus on bitter and astringent foods.",
-        "recommendations": ["Incorporate Karela (Bitter Gourd)", "Morning Triphala tea"],
-        "confidence": 0.92,
-        "sources": ["Lab Report Analysis", "Ashtanga Hridaya - Sutrasthana"]
-    }
+async def scan_report(
+    file: UploadFile = File(...), 
+    dosha: str = "Pitta",
+    service: GeminiService = Depends(get_gemini_service)
+):
+    """
+    Scans a medical report (image/PDF) and extracts health markers with Ayurvedic insights.
+    """
+    try:
+        contents = await file.read()
+        analysis = await service.scan_report(contents, file.content_type, dosha)
+        
+        return HealthReportResponse(
+            markers=analysis.get("markers", []),
+            ayurvedic_insight=analysis.get("ayurvedic_insight", "Analysis inconclusive."),
+            recommendations=analysis.get("recommendations", []),
+            confidence=analysis.get("confidence", 0.0),
+            sources=["Gemini 2.0 Flash Intelligence", "Clinical Lab Data"]
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Report analysis failed: {str(e)}")
 
 @app.get("/api/v1/analyze-barcode/{barcode}", response_model=ProductAnalysis)
-async def analyze_barcode(barcode: str, user_id: str = "demo_user"):
-    # Fetch from Open Food Facts
-    off_url = f"https://world.openfoodfacts.org/api/v2/product/{barcode}.json"
-    response = requests.get(off_url)
-    
-    if response.status_code != 200:
-        raise HTTPException(status_code=404, detail="Product not found")
-    
-    data = response.json()
-    product = data.get("product", {})
+async def analyze_barcode(
+    barcode: str, 
+    dosha: str = "Pitta", 
+    conditions: str = "None",
+    service: GeminiService = Depends(get_gemini_service)
+):
+    """
+    Analyzes a product barcode using Open Food Facts and provides an Ayurvedic verdict.
+    """
+    product = OpenFoodFactsService.get_product_data(barcode)
     name = product.get("product_name", "Unknown Product")
-    ingredients_text = product.get("ingredients_text", "")
+    ingredients_text = product.get("ingredients_text", "Ingredients not listed.")
     
-    # Simulate Gemini 2.0 Flash reasoning
-    return {
-        "product_name": name,
-        "barcode": barcode,
-        "verdict": "Avoid" if "sugar" in ingredients_text.lower() else "Caution",
-        "reason": "High glycemic load ingredients detected." if "sugar" in ingredients_text.lower() else "Processed preservatives found.",
-        "ayurvedic_perspective": "Refined components create Srotas blockage (ama) and aggravate Pitta.",
-        "confidence": 0.89,
-        "sources": ["Open Food Facts", "Ayurvedic Ingredient Database"]
-    }
+    try:
+        analysis = await service.analyze_product(name, ingredients_text, dosha, conditions)
+        
+        return ProductAnalysis(
+            product_name=name,
+            barcode=barcode,
+            verdict=analysis.get("verdict", "Caution"),
+            reason=analysis.get("reason", "Inconclusive analysis."),
+            ayurvedic_perspective=analysis.get("ayurvedic_perspective", "Unavailable."),
+            confidence=analysis.get("confidence", 0.0),
+            sources=["Open Food Facts", "NURA Intelligence"]
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Product analysis failed: {str(e)}")
 
 @app.post("/api/v1/suggest-recipes", response_model=List[Recipe])
-async def suggest_recipes(ingredients: List[str]):
-    # In production, this would use Gemini 2.0 Flash to generate recipes
-    return [
-        {
-            "name": "Healing Mung Dal Kitchari",
-            "health_score": 98,
-            "prep_time": "30 mins",
-            "ingredients": ["mung dal", "basmati rice", "turmeric", "ginger"],
-            "ayurvedic_benefit": "Tridoshic balancing, easy on digestion (Agni)."
-        },
-        {
-            "name": "Cooling Pitta Salad",
-            "health_score": 85,
-            "prep_time": "15 mins",
-            "ingredients": ["cucumber", "cilantro", "lime", "pomegranate"],
-            "ayurvedic_benefit": "Reduces internal heat and balances Pitta dosha."
-        }
-    ]
+async def suggest_recipes(
+    ingredients: List[str], 
+    dosha: str = "Pitta",
+    service: GeminiService = Depends(get_gemini_service)
+):
+    """
+    Suggests healing recipes based on available ingredients and user profile.
+    """
+    try:
+        recipes = await service.suggest_recipes(ingredients, dosha)
+        return [Recipe(**r) for r in recipes]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Recipe suggestion failed: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8080)
+    # Use port from environment or default to 8082
+    port = int(os.getenv("PORT", 8082))
+    uvicorn.run(app, host="0.0.0.0", port=port)
