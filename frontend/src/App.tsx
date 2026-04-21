@@ -21,9 +21,12 @@ const API_BASE = "http://localhost:8081/api/v1";
 const App: React.FC = () => {
   const [currentScreen, setCurrentScreen] = useState<Screen>('home');
   const [loading, setLoading] = useState(false);
+  const [showQuiz, setShowQuiz] = useState(true); // New users see quiz
+  const [dosha, setDosha] = useState<string | null>(null);
   const [reportData, setReportData] = useState<any>(null);
   const [productData, setProductData] = useState<any>(null);
   const [recipes, setRecipes] = useState<any[]>([]);
+  const [showReasoning, setShowReasoning] = useState(false);
 
   const scanReport = async () => {
     setLoading(true);
@@ -70,7 +73,9 @@ const App: React.FC = () => {
   return (
     <div className="container">
       <AnimatePresence mode="wait">
-        {renderScreen()}
+        {showQuiz ? (
+          <DoshaQuiz onComplete={(d) => { setDosha(d); setShowQuiz(false); }} />
+        ) : renderScreen()}
       </AnimatePresence>
       
       {/* Navigation Bar */}
@@ -286,16 +291,41 @@ const ProductScreen = ({ onBack, onScan, data }: { onBack: () => void, onScan: (
           <p style={{ fontSize: 14, color: 'var(--text-muted)', marginTop: 8 }}>
             Analysis: {data.reason}
           </p>
+
+          <button 
+            onClick={() => setShowReasoning(!showReasoning)}
+            style={{ marginTop: 16, background: 'none', border: `1px solid var(--glass-border)`, color: 'var(--primary-brown)', padding: '8px 16px', borderRadius: 12, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}
+          >
+            {showReasoning ? 'Hide Reasoning' : 'Explain Why?'}
+          </button>
           
-          <div style={{ marginTop: 24, padding: 16, background: '#FFF8E1', borderRadius: 16 }}>
-            <h4 style={{ fontSize: 14, color: 'var(--primary-brown)', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <BookOpen size={16} /> Ayurvedic Perspective
-            </h4>
-            <p style={{ fontSize: 13, marginTop: 8, color: '#795548' }}>
-              {data.ayurvedic_perspective}
-            </p>
-          </div>
-          <button className="btn-primary" style={{ marginTop: 24, background: 'var(--text-muted)' }} onClick={() => onScan("")}>Scan Another</button>
+          <AnimatePresence>
+            {showReasoning && (
+              <motion.div 
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                style={{ marginTop: 16, padding: 16, background: '#FFF8E1', borderRadius: 16, overflow: 'hidden' }}
+              >
+                <h4 style={{ fontSize: 14, color: 'var(--primary-brown)', display: 'flex', alignItems: 'center', gap: 8, margin: 0 }}>
+                  <BookOpen size={16} /> Ayurvedic + Clinical Reasoning
+                </h4>
+                <p style={{ fontSize: 13, marginTop: 8, color: '#795548', lineHeight: 1.5 }}>
+                  {data.ayurvedic_perspective}
+                </p>
+                <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(0,0,0,0.05)', fontSize: 11, color: 'var(--text-muted)' }}>
+                  <strong>Sources:</strong> {data.sources.join(', ')} <br/>
+                  <strong>AI Confidence:</strong> {(data.confidence * 100).toFixed(0)}%
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <p style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 24, fontStyle: 'italic' }}>
+            {data.disclaimer}
+          </p>
+
+          <button className="btn-primary" style={{ marginTop: 24, background: 'var(--text-muted)' }} onClick={() => { setProductData(null); setShowReasoning(false); }}>Scan Another</button>
         </div>
       </>
     )}
@@ -362,6 +392,30 @@ const RecipeCard = ({ name, score, time, tags, color, benefit }: any) => (
       <p style={{ fontSize: 12, fontStyle: 'italic', color: 'var(--primary-brown)' }}>"{benefit}"</p>
     </div>
   </div>
+);
+
+const DoshaQuiz = ({ onComplete }: { onComplete: (d: string) => void }) => (
+  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ textAlign: 'center', padding: 20 }}>
+    <Activity size={48} color="var(--primary-saffron)" style={{ marginBottom: 24 }} />
+    <h1>Discover Your Dosha</h1>
+    <p style={{ color: 'var(--text-muted)', marginBottom: 32 }}>Answer 5 questions to personalize NURA to your Prakriti (body constitution).</p>
+    
+    <div className="glass-card" style={{ textAlign: 'left' }}>
+      <h3 style={{ fontSize: 16, marginBottom: 16 }}>How is your digestion usually?</h3>
+      <QuizOption label="Strong & Intense (Pitta)" onClick={() => onComplete('Pitta')} />
+      <QuizOption label="Slow & Heavy (Kapha)" onClick={() => onComplete('Kapha')} />
+      <QuizOption label="Irregular & Gassy (Vata)" onClick={() => onComplete('Vata')} />
+    </div>
+  </motion.div>
+);
+
+const QuizOption = ({ label, onClick }: { label: string, onClick: () => void }) => (
+  <button 
+    onClick={onClick}
+    style={{ width: '100%', textAlign: 'left', padding: '16px', background: 'white', border: '1px solid var(--glass-border)', borderRadius: 12, marginBottom: 12, cursor: 'pointer', fontWeight: 600, color: 'var(--primary-brown)' }}
+  >
+    {label}
+  </button>
 );
 
 export default App;
