@@ -1,10 +1,11 @@
 import os
 from fastapi import FastAPI, UploadFile, File, HTTPException, Depends
+from fastapi.responses import FileResponse
 from typing import List
 from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
 
-from models import HealthReportResponse, ProductAnalysis, Recipe
+from models import ChatRequest, ChatResponse, HealthReportResponse, ProductAnalysis, Recipe
 from services import GeminiService
 from external_apis import OpenFoodFactsService
 
@@ -103,6 +104,41 @@ async def suggest_recipes(
         return [Recipe(**r) for r in recipes]
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Recipe suggestion failed: {str(e)}")
+
+
+@app.post("/api/v1/chat", response_model=ChatResponse)
+async def chat(
+    payload: ChatRequest,
+    service: GeminiService = Depends(get_gemini_service)
+):
+    """
+    Answers natural-language health and wellness questions using app context.
+    """
+    try:
+        result = await service.chat(payload.message, payload.context)
+        return ChatResponse(
+            reply=result.get("reply", "I could not generate a response right now."),
+            suggestions=result.get("suggestions", []),
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Chat request failed: {str(e)}")
+
+STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
+if os.path.isdir(STATIC_DIR):
+    @app.get("/{full_path:path}")
+    async def serve_frontend(full_path: str):
+        if full_path.startswith("api/"):
+            raise HTTPException(status_code=404, detail="API route not found")
+        
+        file_path = os.path.join(STATIC_DIR, full_path)
+        if os.path.isfile(file_path):
+            return FileResponse(file_path)
+            
+        index_path = os.path.join(STATIC_DIR, "index.html")
+        if os.path.isfile(index_path):
+            return FileResponse(index_path)
+            
+        raise HTTPException(status_code=404, detail="Not Found")
 
 if __name__ == "__main__":
     import uvicorn
